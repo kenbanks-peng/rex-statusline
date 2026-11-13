@@ -1,11 +1,13 @@
 # rex-statusline
 
-A status line for Rex, rendered with [Oh My Posh](https://github.com/JanDeDobbeleer/oh-my-posh), shared by terminal splits.
+A status line for [Rex](https://www.superlogical.com/rex/docs), rendered with [Oh My Posh](https://github.com/JanDeDobbeleer/oh-my-posh), shared by terminal splits.
+
+![Rex statusline screenshot](docs/images/rex-statusline.png)
 
 
 ## Pre-requisites
 
-Requires [Rex](https://www.superlogical.com/rex/docs), [Oh My Posh](https://ohmyposh.dev/docs/installation), and a [Nerd Font](https://www.nerdfonts.com/font-downloads).
+Requires [Rex](https://www.superlogical.com/rex/docs) and [Oh My Posh](https://ohmyposh.dev/docs/installation).
 
 
 ## Installation
