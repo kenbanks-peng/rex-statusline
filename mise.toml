@@ -1,0 +1,57 @@
+[tasks.build]
+description = "Build rex-statusline"
+dir = "{{ config_root }}"
+run = "mkdir -p build && go build -o build/rex-statusline ./cmd/rex-statusline"
+
+[tasks.test]
+description = "Run race, vet, PTY, and shell syntax checks"
+dir = "{{ config_root }}"
+depends = ["build"]
+run = [
+  "go test -race ./...",
+  "go vet ./...",
+  "python3 tests/display.py",
+  "python3 tests/shellinit.py",
+  "python3 tests/install.py",
+  "sh -n install.sh",
+  "bash -n internal/shellinit/bash.sh",
+  "zsh -n internal/shellinit/zsh.sh integrations/bsp-bridge.zsh",
+]
+
+[tasks.smoke]
+description = "Run live Rex checks with disposable sessions"
+dir = "{{ config_root }}"
+depends = ["build"]
+run = [
+  "python3 tests/smoke.py",
+  "python3 tests/publisher.py",
+  "python3 tests/bridge.py",
+]
+
+[tasks.cross]
+description = "Cross-build for macOS and Linux on amd64 and arm64"
+dir = "{{ config_root }}"
+run = '''
+set -eu
+mkdir -p build
+for os in darwin linux; do
+  for arch in amd64 arm64; do
+    CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -o "build/rex-statusline-$os-$arch" ./cmd/rex-statusline
+  done
+done
+'''
+
+[tasks.deploy]
+description = "Build and atomically install rex-statusline into ./bin"
+dir = "{{ config_root }}"
+depends = ["build"]
+run = '''
+set -eu
+mkdir -p bin
+temporary=$(mktemp "./bin/.rex-statusline.XXXXXX")
+trap 'rm -f "$temporary"' EXIT
+trap 'exit 1' HUP INT TERM
+cp build/rex-statusline "$temporary"
+chmod 755 "$temporary"
+mv -f "$temporary" bin/rex-statusline
+'''

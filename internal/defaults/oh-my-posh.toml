@@ -1,0 +1,200 @@
+"$schema" = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json"
+version = 4
+final_space = false
+shell_integration = false
+# streaming = 100
+
+[palette]
+shell = '#005b95'              # blue
+shell-foreground = '#e5eaf0'
+root = '#a90000'               # red
+root-foreground = '#f4e4e5'
+fnox = '#f55c1b'               # orange
+fnox-foreground = '#feefe8'
+jobs = '#006b1d'               # green
+jobs-foreground = '#e5ece6'
+directory = '#2f40c2'          # blue
+directory-foreground = '#e5e6f2'
+language = '#005b95'           # blue
+language-foreground = '#e5eaf0'
+git = '#006b1d'                # green
+git-foreground = '#e5ece6'
+git-modified = '#a17a00'       # yellow
+git-diverged = '#8c0888'       # magenta
+git-ahead = '#8c0888'          # magenta
+git-behind = '#8c0888'         # magenta
+status = '#005b95'             # blue
+status-foreground = '#e5eaf0'
+status-error = '#a90000'       # red
+exectime-foreground = '#e5eaf0'
+error = '#a90000'              # red
+error-foreground = '#f4e4e5'
+prompt = '#f55c1b'             # orange
+secondary = '#a90000'          # red
+secondary-accent = '#a17a00'   # yellow
+
+[[blocks]]
+type = 'prompt'
+alignment = 'left'
+newline = false
+
+######### OS #########
+
+[[blocks.segments]]
+type = 'os'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:shell'
+foreground = 'p:shell-foreground'
+template = ' {{ .Icon }}{{ if eq .Env.POSH_HOST_LABEL "laptop" }}  {{ else if eq .Env.POSH_HOST_LABEL "macmini" }}  {{ end }} '
+
+######### ROOT #########
+
+[[blocks.segments]]
+type = 'text'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+foreground = 'p:root-foreground'
+background = 'p:root'
+template = '{{ if eq .Env.BSP_USER_ID "0" }}  {{ end }}'
+
+######### FNOX #########
+
+[[blocks.segments]]
+type = 'text'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+foreground = 'p:fnox-foreground'
+background = 'p:fnox'
+template = "{{ if .Env.FNOX_SHELL }}  {{ end }}"
+
+######### JOBS #########
+
+[[blocks.segments]]
+type = 'text'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:jobs'
+foreground = 'p:jobs-foreground'
+template = '{{ if .Env.JOBCOUNT }} {{ .Env.JOBCOUNT }} {{ end }}'
+
+######### DIRECTORY #########
+
+[[blocks.segments]]
+type = 'text'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:directory'
+foreground = 'p:directory-foreground'
+template = '{{ if .Env.DIRPATH }} {{ .Env.DIRPATH }} {{ end }}'
+
+######### LANGUAGES #########
+
+[[blocks.segments]]
+type = 'go'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:language'
+foreground = 'p:language-foreground'
+template = '{{ if .Full }} go {{ .Full }} {{ end }}'
+
+[[blocks.segments]]
+type = 'lua'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:language'
+foreground = 'p:language-foreground'
+template = '  {{ .Full }} '
+
+[[blocks.segments]]
+type = 'zig'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:language'
+foreground = 'p:language-foreground'
+template = '  {{ .Full }} '
+
+# [[blocks.segments]]
+# type = 'rust'
+# style = 'diamond'
+# leading_diamond = ''
+# trailing_diamond = ''
+# background = 'p:language'
+# foreground = 'p:language-foreground'
+# template = '  {{ .Full }} '
+
+# javascript: deno, svelte, react, node
+[[blocks.segments]]
+type = 'text'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:language'
+foreground = 'p:language-foreground'
+template = '{{ if .Env.JS_SEGMENT }} {{ .Env.JS_SEGMENT }} {{ end }}'
+
+# python: icon by files, version if in venv
+[[blocks.segments]]
+type = 'text'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:language'
+foreground = 'p:language-foreground'
+template = '{{ if .Env.PYTHON_SEGMENT }} {{ .Env.PYTHON_SEGMENT }} {{ end }}'
+
+######### DOCKER #########
+
+[[blocks.segments]]
+type = 'docker'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:language'
+foreground = 'p:language-foreground'
+template = '   '
+options = { display_mode = 'files' }
+
+######### GIT #########
+
+[[blocks.segments]]
+type = 'text'
+style = 'diamond'
+leading_diamond = ''
+trailing_diamond = ''
+background = 'p:git'
+foreground = 'p:git-foreground'
+template = '{{ if .Env.GITSTATUS }} {{ .Env.GITSTATUS }} {{ end }}'
+background_templates = [
+  '{{ if eq .Env.GITSTATUS_CHANGED "1" }}p:git-modified{{ end }}',
+  '{{ if or (ne .Env.GITSTATUS_AHEAD "0") (ne .Env.GITSTATUS_BEHIND "0") }}p:git-diverged{{ end }}',
+]
+
+
+[[blocks.segments]]
+type = 'executiontime'
+style = 'plain'
+foreground = 'p:exectime-foreground'
+template = ' 󰄉 {{ .FormattedMs }} '
+options = { threshold = 1000 }
+
+######### STATUS ENDCAP #########
+
+[[blocks.segments]]
+type = 'status'
+style = 'accordion'
+leading_powerline_symbol = '<transparent,background></>'
+powerline_symbol = ''
+background = 'p:status'
+foreground = 'p:status-foreground'
+template = '{{ if .Error }} {{ .Meaning }} {{ else }}   {{ end }}'
+background_templates = ['{{ if gt .Code 0 }}p:status-error{{ end }}']
+options = { always_enabled = true }

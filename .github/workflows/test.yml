@@ -1,0 +1,22 @@
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: jdx/mise-action@v3
+        with:
+          install: false
+      - run: sudo apt-get update && sudo apt-get install -y zsh
+        if: runner.os == 'Linux'
+      - run: brew install bash zsh && echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+        if: runner.os == 'macOS'
+      - run: mise run test

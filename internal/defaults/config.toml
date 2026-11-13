@@ -1,0 +1,11 @@
+# rex-statusline settings.
+
+[window]
+# (top|bottom left|right|center) | manual
+placement = "bottom center"
+
+[renderer]
+executable = "oh-my-posh"
+# Relative to this config file; absolute paths are also supported.
+theme = "oh-my-posh.toml"
+
