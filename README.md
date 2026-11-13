@@ -5,7 +5,7 @@ A status line for Rex, rendered with [Oh My Posh](https://github.com/JanDeDobbel
 
 ## Pre-requisites
 
-Requires Rex, [Oh My Posh](https://ohmyposh.dev/docs/installation), and a Nerd Font.
+Requires [Rex](https://www.superlogical.com/rex/docs), [Oh My Posh](https://ohmyposh.dev/docs/installation), and a [Nerd Font](https://www.nerdfonts.com/font-downloads).
 
 
 ## Installation
