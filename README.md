@@ -37,6 +37,8 @@ On macOS or Linux with systemd, start the status lines and enable startup at log
 rex-statusline add
 ```
 
+On macOS, rerun `add` after switching installation methods. It updates and restarts a mismatched launch agent, but leaves an aligned, running agent alone. Homebrew installations use an upgrade-stable path.
+
 Stop the status lines:
 
 ```sh

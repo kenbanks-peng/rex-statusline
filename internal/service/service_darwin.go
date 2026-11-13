@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -24,7 +25,7 @@ func Ensure(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	executable, err = filepath.EvalSymlinks(executable)
+	executable, err = launchAgentExecutable(executable)
 	if err != nil {
 		return err
 	}
@@ -58,32 +59,80 @@ func Ensure(ctx context.Context, args []string) error {
 	stringValue(&plist, filepath.Join(logDirectory, "manager.log"))
 	plist.WriteString("<key>RunAtLoad</key><true/><key>KeepAlive</key><true/><key>ThrottleInterval</key><integer>10</integer>\n</dict></plist>\n")
 
-	path := filepath.Join(directory, label+".plist")
+	return ensureLaunchAgent(ctx, filepath.Join(directory, label+".plist"), plist.Bytes(), launchctl)
+}
+
+func ensureLaunchAgent(ctx context.Context, path string, plist []byte, run func(context.Context, ...string) ([]byte, error)) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	current, err := os.ReadFile(path)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	domain := "gui/" + strconv.Itoa(os.Getuid())
 	target := domain + "/" + label
-	_, loadedErr := launchctl(ctx, "print", target)
+	status, loadedErr := run(ctx, "print", target)
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	changed := !bytes.Equal(current, plist.Bytes())
+	changed := !bytes.Equal(current, plist)
+	if loadedErr != nil {
+		var exit *exec.ExitError
+		if !errors.As(loadedErr, &exit) || exit.ExitCode() != 113 {
+			return loadedErr
+		}
+	}
+	if loadedErr == nil && !changed {
+		for _, line := range strings.Split(string(status), "\n") {
+			fields := strings.Fields(line)
+			if len(fields) == 3 && fields[0] == "pid" && fields[1] == "=" {
+				if pid, err := strconv.Atoi(fields[2]); err == nil && pid > 0 {
+					return nil
+				}
+			}
+		}
+		_, err := run(ctx, "kickstart", target)
+		return err
+	}
 	if loadedErr == nil {
-		if _, err := launchctl(ctx, "bootout", target); err != nil {
+		if _, err := run(ctx, "bootout", target); err != nil {
 			return err
 		}
 	}
 	if changed {
-		if err := writePlist(path, plist.Bytes()); err != nil {
+		if err := writePlist(path, plist); err != nil {
 			return err
 		}
 	}
-	if err := bootstrap(ctx, domain, path, launchctl); err != nil {
+	if err := bootstrap(ctx, domain, path, run); err != nil {
 		return err
 	}
 	return nil
+}
+
+// Prefer Homebrew's upgrade-stable alias only when it identifies this binary.
+func launchAgentExecutable(executable string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(executable)
+	if err != nil {
+		return "", err
+	}
+	bin := filepath.Dir(resolved)
+	version := filepath.Dir(bin)
+	formula := filepath.Dir(version)
+	cellar := filepath.Dir(formula)
+	if filepath.Base(cellar) != "Cellar" || filepath.Base(formula) != "rex-statusline" || filepath.Base(bin) != "bin" {
+		return executable, nil
+	}
+	stable := filepath.Join(filepath.Dir(cellar), "opt", "rex-statusline", "bin", filepath.Base(resolved))
+	current, err := os.Stat(resolved)
+	if err != nil {
+		return "", err
+	}
+	if candidate, err := os.Stat(stable); err == nil && os.SameFile(current, candidate) {
+		return stable, nil
+	}
+	return executable, nil
 }
 
 func bootstrap(ctx context.Context, domain, path string, run func(context.Context, ...string) ([]byte, error)) error {
