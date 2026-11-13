@@ -7,10 +7,27 @@ A status line for [Rex](https://www.superlogical.com/rex/docs), rendered with [O
 
 ## Pre-requisites
 
-Requires [Rex](https://www.superlogical.com/rex/docs) and [Oh My Posh](https://ohmyposh.dev/docs/installation).
+Requires [Rex](https://www.superlogical.com/rex/docs). Homebrew installs [Oh My Posh](https://ohmyposh.dev/docs/installation) automatically; install it separately when using the install script.
 
 
 ## Installation
+
+### Homebrew
+
+```sh
+brew install kenbanks-peng/tap/rex-statusline
+```
+
+Supports macOS and Linux on ARM64 and x86-64.
+
+To upgrade:
+
+```sh
+brew update
+brew upgrade rex-statusline
+```
+
+### Install script
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/kenbanks-peng/rex-statusline/main/install.sh | sh
@@ -19,7 +36,7 @@ curl -fsSL https://raw.githubusercontent.com/kenbanks-peng/rex-statusline/main/i
 
 ### Configuration
 
-Ensure that `rex`, `oh-my-posh`, and `~/.local/bin` are on your `PATH`.
+Ensure that `rex` and `oh-my-posh` are on your `PATH`. If using the install script, also add `~/.local/bin` to your `PATH`.
 
 Add the appropriate shell integration:
 - for zsh, add `eval "$(rex-statusline init zsh)"` to your .zshrc file.
