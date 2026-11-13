@@ -130,7 +130,16 @@ func withoutShellSegments(data []byte) ([]byte, error) {
 			segment, ok := entry.(map[string]any)
 			if ok {
 				switch segment["type"] {
-				case "status", "executiontime", "jobs":
+				case "status":
+					// Retain decoration, not status text or conditional colors.
+					neutral := map[string]any{"type": "text", "template": "\u00a0  "}
+					for _, key := range []string{"style", "leading_diamond", "trailing_diamond", "leading_powerline_symbol", "powerline_symbol", "foreground", "background"} {
+						if value, ok := segment[key]; ok {
+							neutral[key] = value
+						}
+					}
+					entry = neutral
+				case "executiontime", "jobs":
 					continue
 				}
 			}
