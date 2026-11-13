@@ -5,7 +5,7 @@ A status line for Rex, rendered with Oh My Posh, shared by terminal splits.
 
 ## Pre-requisites
 
-Requires Rex, [Oh My Posh 32.x](https://ohmyposh.dev/docs/installation), and a Nerd Font.
+Requires Rex, [Oh My Posh](https://ohmyposh.dev/docs/installation), and a Nerd Font.
 
 
 ## Installation

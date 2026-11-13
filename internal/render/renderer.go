@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -70,7 +69,7 @@ func New(ctx context.Context, cfg Config) (*Renderer, error) {
 	}
 	executable, err := exec.LookPath(cfg.Executable)
 	if err != nil {
-		return nil, fmt.Errorf("Oh My Posh executable %q: install Oh My Posh 32 or set renderer.executable: %w", cfg.Executable, err)
+		return nil, fmt.Errorf("Oh My Posh executable %q: install Oh My Posh or set renderer.executable: %w", cfg.Executable, err)
 	}
 	executable, err = filepath.Abs(executable)
 	if err != nil {
@@ -80,12 +79,8 @@ func New(ctx context.Context, cfg Config) (*Renderer, error) {
 	r.dependencies, r.cacheable = themeDependencies(cfg.Theme)
 	check, cancel := context.WithTimeout(ctx, cfg.Timeout)
 	defer cancel()
-	version, err := r.run(check, executable, []string{"version"}, "", baseEnv(nil), 4096)
-	if err != nil {
+	if _, err := r.run(check, executable, []string{"version"}, "", baseEnv(nil), 4096); err != nil {
 		return nil, fmt.Errorf("Oh My Posh version check: %w", err)
-	}
-	if !regexp.MustCompile(`^v?32\.\d+\.\d+(?:[-+][^\s]+)?$`).MatchString(strings.TrimSpace(version)) {
-		return nil, fmt.Errorf("unsupported Oh My Posh version %q; supported major: 32", strings.TrimSpace(version))
 	}
 	data, err := json.Marshal(cfg.Theme)
 	if err != nil {

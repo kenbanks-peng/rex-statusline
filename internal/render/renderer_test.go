@@ -36,11 +36,17 @@ func TestMain(m *testing.M) {
 			if strings.Contains(os.Args[0], "slow-version") {
 				time.Sleep(10 * time.Second)
 			}
-			if strings.Contains(os.Args[0], "old-version") {
-				fmt.Print("31.0.0")
-			} else {
-				fmt.Print("32.0.0")
+			if strings.Contains(os.Args[0], "failed-version") {
+				syscall.Exit(2)
 			}
+			version := "32.0.0"
+			for _, candidate := range []string{"31.0.0", "33.0.0", "99.0.0", "v33.0.0-beta.1"} {
+				if strings.HasPrefix(filepath.Base(os.Args[0]), candidate) {
+					version = candidate
+					break
+				}
+			}
+			fmt.Print(version)
 			syscall.Exit(0)
 		case "print":
 			switch os.Getenv("FAKE_MODE") {
@@ -142,8 +148,25 @@ func TestRendererLifecycle(t *testing.T) {
 		t.Fatal("render after close")
 	}
 }
+func TestRendererAcceptsDifferentVersions(t *testing.T) {
+	for _, version := range []string{"31.0.0", "32.0.0", "33.0.0", "99.0.0", "v33.0.0-beta.1"} {
+		t.Run(version, func(t *testing.T) {
+			cfg := fakeConfig(t)
+			cfg.Executable = fakeOMP(t, version)
+			r, err := New(context.Background(), cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer r.Close()
+			if _, err := r.Render(context.Background(), Input{Cwd: t.TempDir(), Columns: 80}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
 func TestExecutableValidation(t *testing.T) {
-	for _, name := range []string{"old-version", "slow-version"} {
+	for _, name := range []string{"failed-version", "slow-version"} {
 		cfg := fakeConfig(t)
 		cfg.Executable = fakeOMP(t, name)
 		cfg.Timeout = 50 * time.Millisecond
