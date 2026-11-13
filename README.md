@@ -72,4 +72,6 @@ go test ./...
 
 With [mise](https://mise.jdx.dev/), `mise run test` runs the full test suite. `mise run cross` builds for macOS and Linux on amd64 and arm64.
 
+See [release automation](docs/releases.md) for publishing and Homebrew token setup.
+
 See [BSP](docs/BSP.md) for remote and container shell context, and [Rex integration](docs/rex-integration.md) for integration details.

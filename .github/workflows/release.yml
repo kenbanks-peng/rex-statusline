@@ -25,7 +25,9 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Test
-        run: go test ./...
+        run: |
+          go test ./...
+          python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Build archives
         env:
           RELEASE_TAG: ${{ github.ref_name }}
@@ -56,3 +58,68 @@ jobs:
           fi
           gh release upload "$RELEASE_TAG" dist/* --clobber
           gh release edit "$RELEASE_TAG" --draft=false
+
+  homebrew:
+    needs: release
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: homebrew-tap
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      RELEASE_TAG: ${{ github.ref_name }}
+      TAP_REPO: kenbanks-peng/homebrew-tap
+    steps:
+      - name: Check credentials
+        run: |
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::Set HOMEBREW_TAP_TOKEN with Contents and Pull requests write access to $TAP_REPO"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: kenbanks-peng/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          ref: main
+          path: tap
+          fetch-depth: 0
+      - name: Download published archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir archives \
+            --pattern 'rex-statusline-darwin-arm64.tar.gz' \
+            --pattern 'rex-statusline-darwin-amd64.tar.gz' \
+            --pattern 'rex-statusline-linux-arm64.tar.gz' \
+            --pattern 'rex-statusline-linux-amd64.tar.gz'
+      - name: Update formula and merge PR
+        working-directory: tap
+        run: |
+          set -euo pipefail
+          python3 ../source/scripts/update_homebrew.py Formula/rex-statusline.rb "$RELEASE_TAG" ../archives
+          ruby -c Formula/rex-statusline.rb
+          if git diff --quiet -- Formula/rex-statusline.rb; then
+            echo "Formula already up to date; nothing to merge."
+            exit 0
+          fi
+          branch="rex-statusline-$RELEASE_TAG"
+          git switch -c "$branch"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Formula/rex-statusline.rb
+          git commit -m "rex-statusline ${RELEASE_TAG#v}"
+          git push --force-with-lease origin "$branch"
+          pr=$(gh pr list --repo "$TAP_REPO" --head "$branch" --base main --state open --json url --jq '.[0].url // empty')
+          if [[ -z "$pr" ]]; then
+            pr=$(gh pr create --repo "$TAP_REPO" --head "$branch" --base main \
+              --title "rex-statusline ${RELEASE_TAG#v}" \
+              --body "Update version and all four SHA-256 checksums from https://github.com/$GITHUB_REPOSITORY/releases/tag/$RELEASE_TAG.")
+          fi
+          gh pr merge "$pr" --repo "$TAP_REPO" --squash --delete-branch --admin --match-head-commit "$(git rev-parse HEAD)"
