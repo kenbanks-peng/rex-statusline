@@ -1,6 +1,6 @@
 # rex-statusline
 
-A status line for Rex, rendered with Oh My Posh, shared by terminal splits.
+A status line for Rex, rendered with [Oh My Posh](https://github.com/JanDeDobbeleer/oh-my-posh), shared by terminal splits.
 
 
 ## Pre-requisites
