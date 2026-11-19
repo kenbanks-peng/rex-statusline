@@ -50,6 +50,11 @@ func TestMain(m *testing.M) {
 			syscall.Exit(0)
 		case "print":
 			switch os.Getenv("FAKE_MODE") {
+			case "omp-env":
+				_ = json.NewEncoder(os.Stdout).Encode(map[string]string{
+					"OMP_CACHE_DIR":   os.Getenv("OMP_CACHE_DIR"),
+					"POSH_SESSION_ID": os.Getenv("POSH_SESSION_ID"),
+				})
 			case "filesystem":
 				data, err := os.ReadFile(os.Getenv("THEME_STATE_FILE"))
 				if err != nil {

@@ -77,11 +77,6 @@ func New(ctx context.Context, cfg Config) (*Renderer, error) {
 	}
 	r := &Renderer{cfg: cfg, executable: executable}
 	r.dependencies, r.cacheable = themeDependencies(cfg.Theme)
-	check, cancel := context.WithTimeout(ctx, cfg.Timeout)
-	defer cancel()
-	if _, err := r.run(check, executable, []string{"version"}, "", baseEnv(nil), 4096); err != nil {
-		return nil, fmt.Errorf("Oh My Posh version check: %w", err)
-	}
 	data, err := json.Marshal(cfg.Theme)
 	if err != nil {
 		return nil, fmt.Errorf("encode theme: %w", err)
@@ -89,6 +84,12 @@ func New(ctx context.Context, cfg Config) (*Renderer, error) {
 	r.dir, err = os.MkdirTemp("", "rex-statusline-")
 	if err != nil {
 		return nil, err
+	}
+	check, cancel := context.WithTimeout(ctx, cfg.Timeout)
+	defer cancel()
+	if _, err := r.run(check, executable, []string{"version"}, "", r.ompEnv(baseEnv(nil)), 4096); err != nil {
+		os.RemoveAll(r.dir)
+		return nil, fmt.Errorf("Oh My Posh version check: %w", err)
 	}
 	r.theme = filepath.Join(r.dir, "theme.json")
 	if err := os.WriteFile(r.theme, data, 0600); err != nil {
@@ -212,7 +213,7 @@ func (r *Renderer) Render(ctx context.Context, input Input) (string, error) {
 	if input.ShellKnown {
 		args = append(args, "--execution-time", strconv.FormatInt(input.DurationMS, 10), "--status", strconv.Itoa(input.ExitCode), "--job-count", strconv.Itoa(input.Jobs))
 	}
-	out, err := r.run(ctx, r.executable, args, input.Cwd, env, r.cfg.MaxOutputBytes)
+	out, err := r.run(ctx, r.executable, args, input.Cwd, r.ompEnv(env), r.cfg.MaxOutputBytes)
 	if err != nil {
 		return "", fmt.Errorf("render Oh My Posh: %w", err)
 	}
@@ -221,6 +222,16 @@ func (r *Renderer) Render(ctx context.Context, input Input) (string, error) {
 		r.cacheResult(ctx, key, line)
 	}
 	return line, nil
+}
+
+// OMP opens a session cache even when persistence is disabled. Keep its files
+// private and bounded instead of creating a new UUID-named file on every poll.
+// Apply only after native probes; incoming shell cache/session settings must not
+// redirect renderer writes into the interactive shell's cache.
+func (r *Renderer) ompEnv(env map[string]string) map[string]string {
+	env["OMP_CACHE_DIR"] = r.dir
+	env["POSH_SESSION_ID"] = "rex-statusline"
+	return env
 }
 
 // The block environment is authoritative: never inherit the manager's virtualenv,
