@@ -10,7 +10,7 @@ import (
 )
 
 func TestHeightUsesConfiguredPadding(t *testing.T) {
-	for _, padding := range []float64{0, 2.5, 12} {
+	for _, padding := range []float64{0, 2.5, 12, 20} {
 		for _, rectHeight := range []float64{1, .5} {
 			for _, font := range []int{15, 20, 30} {
 				source := Source{

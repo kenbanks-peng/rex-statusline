@@ -33,7 +33,10 @@ sizes and normalized layout rectangles, not exact client content insets. Heights
 therefore use the source’s rows, cell height, and normalized pane height to
 estimate the viewport. On macOS, the saved `Workspace.terminalPaddingY` preference
 adds padding on both vertical edges to both the source estimate and the single
-source-font row. It is reread on each reconciliation; zero means no padding.
+source-font row. Padding points are converted to physical cell pixels using the
+main display’s backing scale (the API does not expose the client window’s display).
+Windows on a display with a different scale remain approximate.
+It is reread on each reconciliation; zero means no padding.
 An absent setting or unsupported platform retains the conservative 8-pixel display
 allowance, while read errors retain the last successful setting. Pane headers and
 other unreported decorations are not measured. Neither display row counts nor its cell metrics are sizing feedback: Rex clamps

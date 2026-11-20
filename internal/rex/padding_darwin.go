@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-// TerminalPadding reads Rex's per-edge vertical padding in points, the same
-// coordinate units Rex reports as cell_height_px. Nil means no saved setting.
+// TerminalPadding reads Rex's per-edge vertical padding and converts points to
+// physical pixels, matching cell_height_px. Nil means no saved setting.
 func TerminalPadding(ctx context.Context) (*float64, error) {
 	return terminalPadding(ctx, "Y")
 }
@@ -29,7 +29,11 @@ func terminalPadding(ctx context.Context, axis string) (*float64, error) {
 		}
 		return nil, fmt.Errorf("read Rex padding: %w", err)
 	}
-	return parsePadding(string(data))
+	scale, err := displayScale()
+	if err != nil {
+		return nil, err
+	}
+	return paddingInPixels(string(data), scale)
 }
 
 func parsePadding(raw string) (*float64, error) {
